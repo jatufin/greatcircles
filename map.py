@@ -6,7 +6,7 @@ from  cartopy.geodesic import Geodesic
 
 
 def plotdistances(starts, targets,
-                  whole_globe=True, projection="Robinson",
+                  whole_globe=True, projection="Robinson", great_circles=True,
                   names=True,
                   distances=True,
                   figsize=(10,8),
@@ -19,6 +19,9 @@ def plotdistances(starts, targets,
               subplot_kw={"projection": ccrs.Robinson()}
             case _:
               subplot_kw={"projection": ccrs.Mercator()}
+
+    
+    transform = ccrs.Geodetic() if great_circles else ccrs.PlateCarree()
 
     fig, ax = plt.subplots(figsize=(10, 8), subplot_kw=subplot_kw)
 
@@ -51,12 +54,15 @@ def plotdistances(starts, targets,
         ax.text(start_lon + 1, start_lat, start, fontsize=12, transform=ccrs.PlateCarree())
         
         for target, (target_lat, target_lon) in targets.items():
+            if target == start:
+                continue
+
             if target not in starts:
                 ax.plot(target_lon, target_lat, "ro", markersize=8, transform=ccrs.PlateCarree())
                 ax.text(target_lon + 1, target_lat, target, fontsize=12, transform=ccrs.PlateCarree())
       
             plt.plot((start_lon, target_lon), (start_lat, target_lat),
-                 color='red',  transform=ccrs.Geodetic())
+                 color='red',  transform=transform)
 
     plt.show()
     return
@@ -75,4 +81,4 @@ if __name__ == "__main__":
         "Vienna": (48.2082, 16.3738),
     }
 
-    plotdistances(starts, targets, whole_globe=False)
+    plotdistances(starts, targets, whole_globe=False, great_circles=False)
