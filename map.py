@@ -58,17 +58,24 @@ def _get_subplot_kw(projection):
 
 def plot_distances(starts: dict,
                    targets: dict,
-                   whole_globe=True,
+                   subplot_args=None,
+                   whole_globe=False,
+                   pairwaise=False, # TODO: Implement
                    projection="Robinson",
                    great_circles=True,
                    plot_names=True,
-                   distances=True,
+                   distances=True, # TODO: Implement
                    figsize=(10,8),
                    padding=5):
-    """ Plot a map and draw distances between points
+    """ Plot a map and draw distances between points    
     """
 
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw=_get_subplot_kw(projection))
+    subplot_kw = _get_subplot_kw(projection)
+
+    if not subplot_args:
+        _, ax = plt.subplots(figsize=figsize, subplot_kw=subplot_kw)
+    else:
+        ax = plt.subplot(subplot_args, projection=subplot_kw["projection"])
     
     ### Draw straight lines or great circles
     transform = ccrs.Geodetic() if great_circles else ccrs.PlateCarree()
@@ -78,8 +85,6 @@ def plot_distances(starts: dict,
     _select_map_features(ax)
 
     _plot_places_and_routes(ax, starts, targets, plot_names, transform)
-
-    plt.show()
 
 if __name__ == "__main__":
     starts = {
@@ -95,4 +100,18 @@ if __name__ == "__main__":
         "Vienna": (48.2082, 16.3738),
     }
 
-    plot_distances(starts, targets, whole_globe=False, great_circles=True)
+    plot_distances(starts, targets, great_circles=False)
+    plt.show()
+
+    plot_distances({"Paris": (48.8566, 2.3522)},
+                   {"Vienna": (48.2082, 16.3738)},
+                   whole_globe=True,
+                   subplot_args=121)
+
+    plot_distances({"Berlin": (52.5200, 13.4050)},
+                   {"Paris": (48.8566, 2.3522),
+                    "Rome": (41.9028, 12.4964),
+                    "Madrid": (40.4168, -3.7038)},
+                   subplot_args=122,
+                   projection="Mercator")
+    plt.show()
