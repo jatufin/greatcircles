@@ -4,30 +4,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from  cartopy.geodesic import Geodesic
 
-
-def plotdistances(starts, targets,
-                  whole_globe=True, projection="Robinson", great_circles=True,
-                  names=True,
-                  distances=True,
-                  figsize=(10,8),
-                  padding=5):
-    """ Plot a map and draw distances between points
-    """
-
-    match projection:
-            case "Robinson":
-              subplot_kw={"projection": ccrs.Robinson()}
-            case _:
-              subplot_kw={"projection": ccrs.Mercator()}
-
-    
-    transform = ccrs.Geodetic() if great_circles else ccrs.PlateCarree()
-
-    fig, ax = plt.subplots(figsize=(10, 8), subplot_kw=subplot_kw)
-
-    # Crop area
-    PADDING = 5
-
+def _crop_map_area(ax, whole_globe, starts, targets, padding):
     if whole_globe:
         ax.set_global()
     else:
@@ -40,7 +17,7 @@ def plotdistances(starts, targets,
         ax.set_extent([min(longs) - padding, max(longs) + padding,
                        min(lats) - padding, max(lats) + padding])
 
-    # Features
+def _select_map_features(ax):
     ax.add_feature(cfeature.LAND)
     ax.add_feature(cfeature.OCEAN)
     ax.add_feature(cfeature.COASTLINE)
@@ -48,10 +25,12 @@ def plotdistances(starts, targets,
     ax.add_feature(cfeature.LAKES, alpha=0.5)
     ax.add_feature(cfeature.RIVERS)
 
-    ### Plot places and routes
+def _plot_places_and_routes(ax, starts, targets, plot_names, transform):
     for start, (start_lat, start_lon) in starts.items():
         ax.plot(start_lon, start_lat, "ro", markersize=8, transform=ccrs.PlateCarree())
-        ax.text(start_lon + 1, start_lat, start, fontsize=12, transform=ccrs.PlateCarree())
+
+        if plot_names:
+            ax.text(start_lon + 1, start_lat, start, fontsize=12, transform=ccrs.PlateCarree())
         
         for target, (target_lat, target_lon) in targets.items():
             if target == start:
@@ -59,13 +38,48 @@ def plotdistances(starts, targets,
 
             if target not in starts:
                 ax.plot(target_lon, target_lat, "ro", markersize=8, transform=ccrs.PlateCarree())
-                ax.text(target_lon + 1, target_lat, target, fontsize=12, transform=ccrs.PlateCarree())
+
+                if plot_names:
+                    ax.text(target_lon + 1, target_lat, target, fontsize=12, transform=ccrs.PlateCarree())
       
             plt.plot((start_lon, target_lon), (start_lat, target_lat),
                  color='red',  transform=transform)
 
+def _get_subplot_kw(projection):
+    match projection:
+        case "Robinson":
+            subplot_kw={"projection": ccrs.Robinson()}
+        case "Orthographic":
+            subplot_kw={"projection": ccrs.Orthographic()}
+        case _:
+            subplot_kw={"projection": ccrs.Mercator()}
+
+    return subplot_kw
+
+def plot_distances(starts: dict,
+                   targets: dict,
+                   whole_globe=True,
+                   projection="Robinson",
+                   great_circles=True,
+                   plot_names=True,
+                   distances=True,
+                   figsize=(10,8),
+                   padding=5):
+    """ Plot a map and draw distances between points
+    """
+
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw=_get_subplot_kw(projection))
+    
+    ### Draw straight lines or great circles
+    transform = ccrs.Geodetic() if great_circles else ccrs.PlateCarree()
+
+    _crop_map_area(ax, whole_globe, starts, targets, padding)
+
+    _select_map_features(ax)
+
+    _plot_places_and_routes(ax, starts, targets, plot_names, transform)
+
     plt.show()
-    return
 
 if __name__ == "__main__":
     starts = {
@@ -81,4 +95,4 @@ if __name__ == "__main__":
         "Vienna": (48.2082, 16.3738),
     }
 
-    plotdistances(starts, targets, whole_globe=False, great_circles=False)
+    plot_distances(starts, targets, whole_globe=False, great_circles=True)
