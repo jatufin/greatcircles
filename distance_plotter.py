@@ -26,45 +26,46 @@ def _select_map_features(ax):
     ax.add_feature(cfeature.LAKES, alpha=0.5)
     ax.add_feature(cfeature.RIVERS)
 
-def _plot_places_and_routes(ax, starts: dict, targets: dict, plot_names: bool, transform) -> dict:
-    """ Plots given places and routes.
+def _plot_places_and_routes(ax, location: dict, targets: dict, plot_names: bool, transform) -> dict:
+    """ Plots distances from the location to all targets
     
-    Returns the distances between places in a dictionary
+    Returns the location name and a list containing target names and distances
     """
     distances = []
 
     # Loop through starting points
-    for start, (start_lat, start_lon) in starts.items():
-        # Place marker
-        ax.plot(start_lon, start_lat, "ro", markersize=8, transform=ccrs.PlateCarree())
+    location_name, (location_lat, location_lon) = list(location.items())[0]
+    
+    # Place marker
+    ax.plot(location_lon, location_lat, "ro", markersize=8, transform=ccrs.PlateCarree())
 
-        # Place name
-        if plot_names:
-            ax.text(start_lon + 1, start_lat, start, fontsize=12, transform=ccrs.PlateCarree())
+    # Place name
+    if plot_names:
+        ax.text(location_lon + 1, location_lat, location_name, fontsize=12, transform=ccrs.PlateCarree())
+    
+    # Loop through targets
+    for target_name, (target_lat, target_lon) in targets.items():
+        if target_name == location_name:
+            continue
         
-        # Loop through targets
-        for target, (target_lat, target_lon) in targets.items():
-            if target == start:
-                continue
-            
-            # Place marker and name
-            if target not in starts:
-                ax.plot(target_lon, target_lat, "ro", markersize=8, transform=ccrs.PlateCarree())
+        # Place marker and name
+        if target_name not in location:
+            ax.plot(target_lon, target_lat, "ro", markersize=8, transform=ccrs.PlateCarree())
 
-                if plot_names:
-                    ax.text(target_lon + 1, target_lat, target, fontsize=12, transform=ccrs.PlateCarree())
-            
-            # The distance line
-            plt.plot((start_lon, target_lon), (start_lat, target_lat),
-                 color='red',  transform=transform)
-
-            # Distance
-            distance = geo_distance((start_lat, start_lon), (target_lat, target_lon), ).km
-            distance = int(distance)
-
-            distances += [[start, target, distance]]
+            if plot_names:
+                ax.text(target_lon + 1, target_lat, target_name, fontsize=12, transform=ccrs.PlateCarree())
         
-    return distances
+        # The distance line
+        plt.plot((location_lon, target_lon), (location_lat, target_lat),
+                color='red',  transform=transform)
+
+        # Distance
+        distance = geo_distance((location_lat, location_lon), (target_lat, target_lon), ).km
+        distance = int(distance)
+
+        distances += [[target_name, distance]]
+        
+    return location_name, distances
 
 def _get_subplot_kw(projection):
     match projection:
@@ -77,7 +78,7 @@ def _get_subplot_kw(projection):
 
     return subplot_kw
 
-def plot_distances(starts: dict,
+def plot_distances(location: dict,
                    targets: dict,
                    subplot_args=None,
                    whole_globe=False,
@@ -89,7 +90,7 @@ def plot_distances(starts: dict,
                    padding=5):
     """ Plot a map and draw distances between points
 
-    Returns a tuple containing the axis and the drawed distances in a dictionary
+    Returns the axis, location name, and the distances in a dictionary
     """
 
     subplot_kw = _get_subplot_kw(projection)
@@ -102,22 +103,22 @@ def plot_distances(starts: dict,
     ### Draw straight lines or great circles
     transform = ccrs.Geodetic() if great_circles else ccrs.PlateCarree()
 
-    _crop_map_area(ax, whole_globe, starts, targets, padding)
+    _crop_map_area(ax, whole_globe, location, targets, padding)
 
     _select_map_features(ax)
 
-    distances = _plot_places_and_routes(ax, starts, targets, plot_names, transform)
+    location_name, distances = _plot_places_and_routes(ax, location, targets, plot_names, transform)
 
-    return ax, distances
+    return ax, location_name, distances
 
-def distance_table(distances,
-                   title="Distances",
-                   start_label="Start",
-                   target_label="Target",
-                   distance_label="Distance",
-                   font_size=12,
-                   subplot_args=None,
-                   figsize=(10,8)):
+def distance_table(location,
+                    distances,
+                    title=None,
+                    target_label="Target",
+                    distance_label="Distance",
+                    font_size=12,
+                    subplot_args=None,
+                    figsize=(10,8)):
     """ Plot a table of the distances
     
     Arguments:
@@ -131,14 +132,14 @@ def distance_table(distances,
         ax = plt.subplot(subplot_args)
 
     ax.axis("off")
-    ax.set_title(title)
+    ax.set_title(title if title else f"Distance from {location} in km")
 
     table = ax.table(
         cellText=distances,
-        colLabels=[start_label, target_label, distance_label],
+        colLabels=[target_label, distance_label],
         loc="center",
         cellLoc="center",
-        colWidths=[0.3, 0.3, 0.4]
+        colWidths=[0.7, 0.3]
     )
 
     table.auto_set_font_size(False)
