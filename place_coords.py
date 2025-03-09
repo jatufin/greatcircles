@@ -50,7 +50,7 @@ random_cities_worldwide = {
     "Lagos": (6.5244, 3.3792),
     "Rio de Janeiro": (-22.9068, -43.1729),
     "Los Angeles": (34.0522, -118.2437),
-    "Sydney": (-33.8688, 151.2093),  # Replaced Moscow with Sydney
+    "Sydney": (-33.8688, 151.2093),
     "Istanbul": (41.0082, 28.9784),
     "Seoul": (37.5665, 126.9780),
 }
@@ -64,5 +64,5 @@ closest_to_point_nemo = {
     "Motu Nui (Easter Island)": (-27.1833, -109.4500),
     "Maher Island (Antarctica)": (-72.9667, -126.2167),
     "Pitcairn Island": (-25.0667, -130.1000),
-    "Easter Island": (-27.1167, -109.3667),
+    # "Easter Island": (-27.1167, -109.3667),
 }
