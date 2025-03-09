@@ -43,7 +43,8 @@ if __name__ == "__main__":
     # Distances from Point Nemo to the nearest islands
     ax, location_name, distances = plot_distances(point_nemo, closest_to_point_nemo,
                                     whole_globe=True,
-                                    subplot_args=121)
+                                    subplot_args=121,
+                                    projection="Orthographic")
 
     # Distances on the subplot to the right
     ax, table = distance_table(location_name, distances, subplot_args=122)

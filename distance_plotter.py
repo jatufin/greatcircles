@@ -67,12 +67,15 @@ def _plot_places_and_routes(ax, location: dict, targets: dict, plot_names: bool,
         
     return location_name, distances
 
-def _get_subplot_kw(projection):
+def _get_subplot_kw(projection, location):
+    _ , (location_lat, location_lon) = list(location.items())[0]
+    
     match projection:
         case "Robinson":
             subplot_kw={"projection": ccrs.Robinson()}
         case "Orthographic":
-            subplot_kw={"projection": ccrs.Orthographic()}
+            subplot_kw={"projection": ccrs.Orthographic(central_latitude=location_lat,
+                                                        central_longitude=location_lon)}
         case _:
             subplot_kw={"projection": ccrs.Mercator()}
 
@@ -93,7 +96,7 @@ def plot_distances(location: dict,
     Returns the axis, location name, and the distances in a dictionary
     """
 
-    subplot_kw = _get_subplot_kw(projection)
+    subplot_kw = _get_subplot_kw(projection, location)
 
     if not subplot_args:
         _, ax = plt.subplots(figsize=figsize, subplot_kw=subplot_kw)
